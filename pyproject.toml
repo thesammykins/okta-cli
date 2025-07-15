@@ -1,0 +1,30 @@
+[project]
+name = "okta-cli"
+version = "0.1.0"
+description = "A CLI tool to interact with Okta APIs."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click",
+    "requests",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/samanthamyers/provision"
+"Bug Tracker" = "https://github.com/samanthamyers/provision/issues"
+
+[project.scripts]
+okta-cli = "okta_cli.main:cli"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["okta_cli*"]
