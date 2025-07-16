@@ -2,6 +2,7 @@ import click
 import requests
 from . import config
 import json
+from .utils import resolve_user_id, resolve_group_id, get_group_by_identifier
 
 @click.group()
 def groups():
@@ -71,10 +72,10 @@ def create_group(name, description, profile):
         click.echo(f"Error: {response.status_code} - {response.text}")
 
 @groups.command('show')
-@click.argument('group_id')
+@click.argument('group_identifier')
 @click.option('--profile', default='default', help='The profile to use.')
-def show_group(group_id, profile):
-    """Show details for a specific group."""
+def show_group(group_identifier, profile):
+    """Show details for a specific group (accepts ID or name)."""
     cfg = config.get_config()
     if not cfg.has_section(profile):
         click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
@@ -83,18 +84,13 @@ def show_group(group_id, profile):
     domain = cfg.get(profile, "domain")
     token = cfg.get(profile, "token")
 
-    headers = {
-        "Authorization": f"SSWS {token}",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-
-    response = requests.get(f"https://{domain}/api/v1/groups/{group_id}", headers=headers)
-
-    if response.status_code == 200:
-        click.echo(json.dumps(response.json(), indent=4))
+    # Try to get group by identifier (ID or name)
+    group = get_group_by_identifier(group_identifier, domain, token)
+    
+    if group:
+        click.echo(json.dumps(group, indent=4))
     else:
-        click.echo(f"Error: {response.status_code} - {response.text}")
+        click.echo(f"Error: Group not found with identifier '{group_identifier}'")
 
 @groups.command('update')
 @click.argument('group_id')
@@ -163,11 +159,11 @@ def delete_group(group_id, profile):
         click.echo(f"Error: {response.status_code} - {response.text}")
 
 @groups.command('add-user')
-@click.argument('group_id')
-@click.argument('user_id')
+@click.argument('group_identifier')
+@click.argument('user_identifier')
 @click.option('--profile', default='default', help='The profile to use.')
-def add_user_to_group(group_id, user_id, profile):
-    """Adds a user to a group in Okta."""
+def add_user_to_group(group_identifier, user_identifier, profile):
+    """Adds a user to a group in Okta (accepts names or IDs)."""
     cfg = config.get_config()
     if not cfg.has_section(profile):
         click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
@@ -175,6 +171,17 @@ def add_user_to_group(group_id, user_id, profile):
 
     domain = cfg.get(profile, "domain")
     token = cfg.get(profile, "token")
+
+    # Resolve identifiers to IDs
+    group_id = resolve_group_id(group_identifier, domain, token)
+    if not group_id:
+        click.echo(f"Error: Group not found with identifier '{group_identifier}'")
+        return
+
+    user_id = resolve_user_id(user_identifier, domain, token)
+    if not user_id:
+        click.echo(f"Error: User not found with identifier '{user_identifier}'")
+        return
 
     headers = {
         "Authorization": f"SSWS {token}",

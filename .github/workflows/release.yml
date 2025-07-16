@@ -1,0 +1,212 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine pytest
+        pip install -r requirements.txt
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v
+    
+    - name: Build package
+      run: |
+        python -m build
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-${{ matrix.python-version }}
+        path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+        pip install -r requirements.txt
+    
+    - name: Build package
+      run: |
+        python -m build
+    
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: Okta CLI ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## Okta CLI Release ${{ steps.get_version.outputs.VERSION }}
+          
+          ### Installation
+          
+          **Using pip:**
+          ```bash
+          pip install okta-cli
+          ```
+          
+          **From source:**
+          ```bash
+          pip install okta-cli-${{ steps.get_version.outputs.VERSION }}.tar.gz
+          ```
+          
+          ### Quick Start
+          
+          ```bash
+          # Install dependencies
+          pip install -r requirements.txt
+          
+          # Run setup
+          okta-cli config wizard
+          
+          # Test installation
+          okta-cli --help
+          ```
+          
+          ### What's New
+          
+          - Complete Okta identity management CLI tool
+          - User, group, and application management
+          - Session and policy management
+          - Multi-factor authentication support
+          - Security monitoring and logging
+          - Profile-based configuration
+          - Comprehensive error handling
+          
+          ### System Requirements
+          
+          - Python 3.8+
+          - Valid Okta domain and API token
+          
+          ### Documentation
+          
+          See the README.md and docs/ directory for complete documentation.
+          
+          ---
+          
+          🤖 Generated with [GitHub Actions](https://github.com/features/actions)
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset - Wheel
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/*.whl
+        asset_name: okta-cli-${{ steps.get_version.outputs.VERSION }}-py3-none-any.whl
+        asset_content_type: application/zip
+    
+    - name: Upload Release Asset - Source
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/*.tar.gz
+        asset_name: okta-cli-${{ steps.get_version.outputs.VERSION }}.tar.gz
+        asset_content_type: application/gzip
+    
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      run: |
+        if [ -n "$TWINE_PASSWORD" ]; then
+          echo "Publishing to PyPI..."
+          twine upload dist/*
+        else
+          echo "PYPI_TOKEN not set, skipping PyPI upload"
+        fi
+
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ghcr.io/thesammykins/okta-cli:${{ steps.get_version.outputs.VERSION }}
+          ghcr.io/thesammykins/okta-cli:latest
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.version=${{ steps.get_version.outputs.VERSION }}
+          org.opencontainers.image.created=${{ steps.date.outputs.date }}

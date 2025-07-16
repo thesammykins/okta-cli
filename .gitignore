@@ -202,3 +202,90 @@ config.ini
 
 # Project specific
 # Add any project-specific files or directories to ignore here
+
+# Okta CLI Configuration and Secrets
+.okta-cli/
+.okta/
+okta_config.ini
+**/okta_config.ini
+credentials
+credentials.*
+config.ini
+**/config.ini
+*.credentials
+*.token
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# API Keys and Tokens
+**/api_key*
+**/token*
+**/secret*
+**/password*
+**/apikey*
+**/api-key*
+OKTA_TOKEN
+OKTA_API_TOKEN
+OKTA_DOMAIN
+*.env.production
+*.env.staging
+*.env.development
+*.env.local
+*.env.*.local
+
+# Backup files from config operations
+*.backup
+*.bak
+*_backup*
+*_bak*
+backup_*
+bak_*
+
+# Temporary data files
+temp_*.json
+temp_*.csv
+temp_*.txt
+temp_*.log
+*.tmp.json
+*.tmp.csv
+*.tmp.txt
+user_data_*.json
+group_data_*.json
+app_data_*.json
+session_data_*.json
+log_data_*.json
+export_*.json
+export_*.csv
+dump_*.json
+dump_*.csv
+
+# Test artifacts
+test_config.ini
+test_credentials
+test_token
+test_data_*.json
+test_output_*.json
+test_results/
+test_artifacts/
+
+# Runtime files
+*.pid
+*.sock
+*.port
+*.lock
+nohup.out
+
+# Security scan results
+bandit-report.json
+safety-report.json
+security-report.*
+
+# Local scripts (potentially containing secrets)
+local_*
+private_*
+personal_*
+my_*
+secret_*

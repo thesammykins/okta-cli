@@ -30,6 +30,8 @@ This documentation provides information on how to use the Okta CLI tool, as well
     *   [Remove User from Group](#remove-user-from-group)
     *   [List Group Members](#list-group-members)
 *   [API References](#api-references)
+*   [Error Handling](#error-handling)
+*   [Security Features](#security-features)
 *   [Code Standards](#code-standards)
 
 ## Getting Started
@@ -264,3 +266,75 @@ This section provides links to the official Okta API documentation for the endpo
 *   **Assign User to Application:** [Assign User to Application](https://developer.okta.com/docs/reference/api/apps/#assign-user-to-application)
 *   **Unassign User from Application:** [Unassign User from Application](https://developer.okta.com/docs/reference/api/apps/#unassign-user-from-application)
 *   **List Application Assignments:** [List Application Assignments](https://developer.okta.com/docs/reference/api/apps/#list-application-assignments)
+
+## Error Handling
+
+The Okta CLI tool includes comprehensive error handling to provide clear, actionable feedback when issues occur. All commands include:
+
+- **Input Validation**: Email format, domain validation, and required field checks
+- **API Error Handling**: Clear messages for authentication, permission, and server errors
+- **Network Error Handling**: Timeout and connection error management
+- **Configuration Error Handling**: Missing profile and configuration file issues
+
+For detailed information about error types and recovery suggestions, see the [Error Handling Documentation](error_handling.md).
+
+### Common Error Examples
+
+```bash
+# Authentication error
+Error: Authentication failed: Invalid token provided
+
+# Permission error  
+Error: Permission denied: You do not have permission to access this resource
+
+# Network error
+Error: Connection timeout: Unable to connect to Okta. Please check your internet connection.
+
+# Validation error
+Error: Invalid email format: invalid-email
+```
+
+## Security Features
+
+The Okta CLI tool includes comprehensive security features to protect your credentials and ensure safe API usage:
+
+- **Encrypted Credential Storage**: All API tokens are encrypted using AES-256 encryption with PBKDF2 key derivation
+- **Token Validation**: Validates tokens and permissions before API calls
+- **Rate Limiting**: Client-side rate limiting to prevent API abuse
+- **Secure File Permissions**: Restrictive file permissions on configuration files
+- **Master Password Protection**: All credentials protected by a master password
+
+### Key Security Features
+
+```bash
+# Encrypted credential storage with master password
+okta-cli configure
+Create master password: [hidden]
+Confirm master password: [hidden]
+
+# Automatic token validation
+okta-cli users list
+# Token validation occurs automatically before API calls
+
+# Built-in rate limiting
+# CLI automatically manages rate limits to prevent API violations
+```
+
+### Security Best Practices
+
+1. **Use strong master passwords** (8+ characters with mixed case, numbers, symbols)
+2. **Rotate API tokens regularly** 
+3. **Keep configuration files secure** (automatic restrictive permissions)
+4. **Monitor token usage** and access patterns
+5. **Create encrypted backups** of your configuration
+
+For detailed security information, see the [Security Documentation](security.md).
+
+### Security Architecture
+
+The CLI implements multiple security layers:
+- **Transport Security**: HTTPS with certificate validation
+- **Credential Encryption**: AES-256 encryption at rest  
+- **Access Control**: File permissions and master password protection
+- **Rate Limiting**: Prevents abuse and ensures reliable operation
+- **Input Validation**: All input validated before processing

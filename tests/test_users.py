@@ -192,7 +192,7 @@ def test_list_app_assignments(mock_get, mock_config):
     assert "user1@example.com" in result.output
     assert "user2@example.com" in result.output
     mock_get.assert_called_once_with(
-        'https://test.okta.com/api/v1/apps/app123/assignments',
+        'https://test.okta.com/api/v1/apps/app123/users',
         headers={
             'Authorization': 'SSWS test-token',
             'Accept': 'application/json',
