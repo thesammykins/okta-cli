@@ -12,15 +12,15 @@ class CompletionProvider:
     """
     Provides auto-completion for commands, options, and arguments.
     """
-    
+
     def __init__(self):
         """Initialize completion provider."""
         self.profile_manager = ProfileManager()
-    
+
     def get_profile_names(self) -> List[str]:
         """
         Get list of available profile names for completion.
-        
+
         Returns:
             List of profile names
         """
@@ -29,43 +29,73 @@ class CompletionProvider:
             return list(profiles.keys())
         except Exception:
             return []
-    
+
     def get_config_commands(self) -> List[str]:
         """
         Get list of config subcommands for completion.
-        
+
         Returns:
             List of config subcommands
         """
         return [
-            'list', 'create', 'update', 'delete', 'activate', 'show',
-            'validate', 'health', 'backup', 'restore', 'export', 'import',
-            'env', 'migrate', 'current', 'wizard', 'interactive', 'status'
+            "list",
+            "create",
+            "update",
+            "delete",
+            "activate",
+            "show",
+            "validate",
+            "health",
+            "backup",
+            "restore",
+            "export",
+            "import",
+            "env",
+            "migrate",
+            "current",
+            "wizard",
+            "interactive",
+            "status",
         ]
-    
+
     def get_user_commands(self) -> List[str]:
         """
         Get list of user subcommands for completion.
-        
+
         Returns:
             List of user subcommands
         """
         return [
-            'list', 'create', 'show', 'update', 'suspend', 'unsuspend',
-            'activate', 'deactivate', 'reset-password', 'assign-app',
-            'unassign-app', 'list-app-assignments'
+            "list",
+            "create",
+            "show",
+            "update",
+            "suspend",
+            "unsuspend",
+            "activate",
+            "deactivate",
+            "reset-password",
+            "assign-app",
+            "unassign-app",
+            "list-app-assignments",
         ]
-    
+
     def get_group_commands(self) -> List[str]:
         """
         Get list of group subcommands for completion.
-        
+
         Returns:
             List of group subcommands
         """
         return [
-            'list', 'create', 'show', 'update', 'delete', 'add-user',
-            'remove-user', 'list-users'
+            "list",
+            "create",
+            "show",
+            "update",
+            "delete",
+            "add-user",
+            "remove-user",
+            "list-users",
         ]
 
 
@@ -100,27 +130,27 @@ def complete_group_command(ctx, param, incomplete):
 
 def complete_output_format(ctx, param, incomplete):
     """Complete output format options."""
-    formats = ['json', 'table', 'csv', 'yaml', 'text']
+    formats = ["json", "table", "csv", "yaml", "text"]
     return [f for f in formats if f.startswith(incomplete)]
 
 
 def complete_file_path(ctx, param, incomplete):
     """Complete file paths."""
     import glob
-    
+
     # Handle home directory expansion
-    if incomplete.startswith('~'):
+    if incomplete.startswith("~"):
         incomplete = os.path.expanduser(incomplete)
-    
+
     # Get directory and filename parts
     if os.path.isdir(incomplete):
-        search_path = os.path.join(incomplete, '*')
+        search_path = os.path.join(incomplete, "*")
     else:
-        search_path = incomplete + '*'
-    
+        search_path = incomplete + "*"
+
     # Get matching files and directories
     matches = glob.glob(search_path)
-    
+
     # Sort and return
     matches.sort()
     return matches
@@ -132,12 +162,12 @@ def setup_completion():
     This function can be called to enable completion.
     """
     click.echo("Setting up command completion...")
-    
+
     # Get shell type
-    shell = os.environ.get('SHELL', '').split('/')[-1]
-    
-    if shell == 'bash':
-        completion_script = '''
+    shell = os.environ.get("SHELL", "").split("/")[-1]
+
+    if shell == "bash":
+        completion_script = """
 # Okta CLI completion for Bash
 _okta_cli_completion() {
     local cur prev opts
@@ -182,17 +212,17 @@ _okta_cli_completion() {
 }
 
 complete -F _okta_cli_completion okta-cli
-'''
-        
-        completion_file = os.path.expanduser('~/.bash_completion')
-        with open(completion_file, 'a') as f:
+"""
+
+        completion_file = os.path.expanduser("~/.bash_completion")
+        with open(completion_file, "a") as f:
             f.write(completion_script)
-        
+
         click.echo("✅ Bash completion added to ~/.bash_completion")
         click.echo("💡 Run 'source ~/.bash_completion' to enable completion")
-    
-    elif shell == 'zsh':
-        completion_script = '''
+
+    elif shell == "zsh":
+        completion_script = """
 #compdef okta-cli
 
 _okta_cli() {
@@ -267,19 +297,19 @@ _okta_cli() {
 }
 
 _okta_cli "$@"
-'''
-        
-        completion_dir = os.path.expanduser('~/.zsh/completions')
+"""
+
+        completion_dir = os.path.expanduser("~/.zsh/completions")
         os.makedirs(completion_dir, exist_ok=True)
-        
-        completion_file = os.path.join(completion_dir, '_okta-cli')
-        with open(completion_file, 'w') as f:
+
+        completion_file = os.path.join(completion_dir, "_okta-cli")
+        with open(completion_file, "w") as f:
             f.write(completion_script)
-        
+
         click.echo("✅ Zsh completion added to ~/.zsh/completions/_okta-cli")
         click.echo("💡 Add 'fpath=(~/.zsh/completions $fpath)' to your ~/.zshrc")
         click.echo("💡 Run 'autoload -U compinit && compinit' to enable completion")
-    
+
     else:
         click.echo(f"❌ Shell completion not supported for: {shell}")
         click.echo("💡 Supported shells: bash, zsh")
@@ -287,22 +317,22 @@ _okta_cli "$@"
 
 def install_completion():
     """Install shell completion based on current shell."""
-    shell = os.environ.get('SHELL', '').split('/')[-1]
-    
-    if shell in ['bash', 'zsh']:
+    shell = os.environ.get("SHELL", "").split("/")[-1]
+
+    if shell in ["bash", "zsh"]:
         if click.confirm(f"Install completion for {shell}?"):
             setup_completion()
             return True
     else:
         click.echo(f"Shell completion not available for: {shell}")
         return False
-    
+
     return False
 
 
 # Click completion helpers for use with @click.option
 profile_completion = click.Choice([])  # Will be populated dynamically
-output_format_completion = click.Choice(['json', 'table', 'csv', 'yaml', 'text'])
+output_format_completion = click.Choice(["json", "table", "csv", "yaml", "text"])
 
 
 def get_dynamic_profile_completion():
@@ -313,12 +343,12 @@ def get_dynamic_profile_completion():
 
 class ProfileChoice(click.Choice):
     """Dynamic choice class for profile names."""
-    
+
     def __init__(self):
         self._choices = []
         super().__init__(self._choices)
         self.name = "profile"
-    
+
     def get_choices(self):
         """Get current profile choices."""
         try:
@@ -326,22 +356,22 @@ class ProfileChoice(click.Choice):
             return provider.get_profile_names()
         except Exception:
             return []
-    
+
     def convert(self, value, param, ctx):
         """Convert and validate profile name."""
         choices = self.get_choices()
         if value in choices or not choices:
             return value
-        
+
         # If not in choices, still allow it (profile might not exist yet)
         return value
 
 
 class OutputFormatChoice(click.Choice):
     """Choice class for output formats."""
-    
+
     def __init__(self):
-        super().__init__(['json', 'table', 'csv', 'yaml', 'text'])
+        super().__init__(["json", "table", "csv", "yaml", "text"])
         self.name = "format"
 
 

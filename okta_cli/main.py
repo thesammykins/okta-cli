@@ -10,12 +10,15 @@ from . import logs
 from . import factors
 from .config_commands import config as config_commands
 from .errors import (
-    validate_okta_domain, validate_api_token, with_error_handling,
-    handle_corrupted_config
+    validate_okta_domain,
+    validate_api_token,
+    with_error_handling,
+    handle_corrupted_config,
 )
 from .interactive import InteractivePrompts
 from .enhanced_config import ProfileManager
 import configparser
+
 
 @click.group()
 def cli():
@@ -24,15 +27,21 @@ def cli():
     try:
         manager = ProfileManager()
         profiles = manager.list_profiles()
-        
+
         if not profiles:
-            click.echo(click.style("💡 No profiles configured. Run 'okta-cli config wizard' to get started!", fg='yellow'))
+            click.echo(
+                click.style(
+                    "💡 No profiles configured. Run 'okta-cli config wizard' to get started!",
+                    fg="yellow",
+                )
+            )
     except Exception:
         # Silently ignore errors during initialization
         pass
 
+
 @cli.command()
-@click.option('--profile', default='default', help='The profile to configure.')
+@click.option("--profile", default="default", help="The profile to configure.")
 @with_error_handling
 def configure(profile):
     """Configures the Okta domain and API token."""
@@ -47,7 +56,7 @@ def configure(profile):
         cfg = config.get_config()
     except configparser.Error:
         handle_corrupted_config()
-    
+
     if not cfg.has_section(profile):
         cfg.add_section(profile)
 
@@ -56,6 +65,7 @@ def configure(profile):
 
     config.write_config(cfg)
     click.echo(f"Configuration saved for profile '{profile}'.")
+
 
 cli.add_command(users.users)
 cli.add_command(groups.groups)
@@ -67,5 +77,5 @@ cli.add_command(logs.logs)
 cli.add_command(factors.factors)
 cli.add_command(config_commands)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
