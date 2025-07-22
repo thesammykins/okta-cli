@@ -10,27 +10,37 @@ The Okta CLI uses profile-based configuration to manage multiple Okta environmen
 
 ### Configuration Directory
 
-Configuration is stored in:
-- **Location**: `~/.okta-cli/`
-- **Main file**: `config.ini`
+Configuration is stored using the enhanced configuration system:
+- **Location**: `~/.okta/`
+- **Main file**: `profiles.json`
+- **Active profile**: `active_profile`
 - **Permissions**: Automatically set to restrictive permissions (700 for directory, 600 for files)
 
 ### Configuration File Format
 
-The configuration file uses INI format:
+The enhanced configuration system uses JSON format for profiles:
 
-```ini
-[default]
-domain = your.okta.com
-token = your-api-token
-
-[development]
-domain = dev.okta.com
-token = dev-api-token
-
-[production]
-domain = prod.okta.com
-token = prod-api-token
+```json
+{
+  "default": {
+    "domain": "your.okta.com",
+    "token": "your-api-token",
+    "created_at": 1640995200.0,
+    "last_used": 1640995200.0
+  },
+  "development": {
+    "domain": "dev.okta.com",
+    "token": "dev-api-token",
+    "created_at": 1640995300.0,
+    "last_used": 1640995300.0
+  },
+  "production": {
+    "domain": "prod.okta.com",
+    "token": "prod-api-token",
+    "created_at": 1640995400.0,
+    "last_used": 1640995400.0
+  }
+}
 ```
 
 ## Profile Management
@@ -150,7 +160,7 @@ Configuration values are resolved in this order (highest to lowest priority):
 
 1. **Command-line options** (`--profile`, `--domain`, `--token`)
 2. **Environment variables** (`OKTA_PROFILE`, `OKTA_DOMAIN`, `OKTA_TOKEN`)
-3. **Configuration file** (`~/.okta-cli/config.ini`)
+3. **Profile configuration** (`~/.okta/profiles.json`)
 4. **Default values**
 
 ## API Token Management
@@ -287,32 +297,24 @@ okta-cli users create --first-name John --last-name Doe --email john@example.com
 okta-cli users show john@example.com --profile staging
 ```
 
-### Configuration Templates
+### Profile-Based Configuration Examples
 
-Create configuration templates for common setups:
+Set up common profile configurations:
 
-#### Development Template
+#### Development Environment Setup
 
-```ini
-[development]
-domain = dev.okta.com
-token = dev-token-here
-
-[dev-test]
-domain = dev.okta.com
-token = dev-test-token-here
+```bash
+# Create development profiles
+okta-cli config create dev --domain dev.okta.com --token dev-token-here
+okta-cli config create dev-test --domain dev.okta.com --token dev-test-token-here
 ```
 
-#### Production Template
+#### Production Environment Setup
 
-```ini
-[production]
-domain = company.okta.com
-token = prod-token-here
-
-[prod-readonly]
-domain = company.okta.com
-token = readonly-token-here
+```bash
+# Create production profiles
+okta-cli config create production --domain company.okta.com --token prod-token-here
+okta-cli config create prod-readonly --domain company.okta.com --token readonly-token-here
 ```
 
 ## Backup and Restore
@@ -472,13 +474,13 @@ Debug output includes:
 
 ### Configuration Validation Script
 
-Create a validation script:
+Create a validation script for the enhanced configuration system:
 
 ```bash
 #!/bin/bash
 set -e
 
-echo "Validating Okta CLI configuration..."
+echo "Validating Okta CLI enhanced configuration..."
 
 # Check if CLI is installed
 if ! command -v okta-cli &> /dev/null; then
@@ -486,16 +488,16 @@ if ! command -v okta-cli &> /dev/null; then
     exit 1
 fi
 
-# Check configuration directory
-if [ ! -d ~/.okta-cli ]; then
-    echo "ERROR: Configuration directory not found. Run 'okta-cli config wizard' first."
-    exit 1
+# Check if enhanced configuration exists
+if [ ! -d ~/.okta ]; then
+    echo "INFO: Enhanced configuration directory not found. Creating initial profile..."
+    okta-cli config wizard
 fi
 
-# Check configuration file
-if [ ! -f ~/.okta-cli/config.ini ]; then
-    echo "ERROR: Configuration file not found. Run 'okta-cli config wizard' first."
-    exit 1
+# Check for profiles
+if ! okta-cli config list &> /dev/null; then
+    echo "INFO: No profiles found. Run 'okta-cli config wizard' to create your first profile."
+    exit 0
 fi
 
 # List profiles
@@ -506,7 +508,7 @@ okta-cli config list
 echo "Configuration health check:"
 okta-cli config health
 
-echo "Configuration validation complete!"
+echo "Enhanced configuration validation complete!"
 ```
 
 ## Best Practices

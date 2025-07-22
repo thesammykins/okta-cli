@@ -12,13 +12,23 @@ Get up and running with the Okta CLI in minutes.
 
 ### 1. Configure Your First Profile
 
-Run the interactive configuration wizard:
+The Okta CLI uses an enhanced configuration system with profile management. Run the interactive configuration wizard:
 
 ```bash
 okta-cli config wizard
 ```
 
-The wizard will prompt you for:
+Alternatively, create profiles directly:
+
+```bash
+# Create a development profile
+okta-cli config create dev --domain dev.okta.com --token your-dev-token
+
+# Create a production profile
+okta-cli config create prod --domain prod.okta.com --token your-prod-token
+```
+
+The configuration system will prompt you for:
 - **Profile name** (e.g., "production", "development")
 - **Okta domain** (e.g., "company.okta.com")
 - **API token** (create one in Okta Admin Console → Security → API)

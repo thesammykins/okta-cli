@@ -34,8 +34,11 @@ pip install -e .
 ### Configuration
 
 ```bash
-# Interactive setup
+# Interactive setup with enhanced configuration system
 okta-cli config wizard
+
+# Or create profiles directly
+okta-cli config create dev --domain dev.okta.com --token your-token
 
 # Or use environment variables
 export OKTA_DOMAIN=your.okta.com

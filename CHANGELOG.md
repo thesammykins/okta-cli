@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Removed legacy INI configuration system; enhanced system is now mandatory.
+
 ### Added
 - Initial release of Okta CLI tool
 - Comprehensive user management commands
