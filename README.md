@@ -1,5 +1,7 @@
 # Okta CLI Tool
 
+**This tool is still a work-in-progress and should only be used in sandbox environments, please log issues if you are actively testing or using this tool.**
+
 A comprehensive command-line interface for managing Okta identity and access management operations. Built with Python and Click, this tool provides extensive functionality for user management, application management, security policies, session management, and more.
 
 ## Features
