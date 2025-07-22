@@ -13,6 +13,7 @@ from .enhanced_config import (
     EnvironmentConfig,
     get_effective_config,
 )
+from .secure_storage import SecureProfileManager
 from .errors import ConfigurationError, ValidationError
 
 
@@ -21,10 +22,10 @@ class InteractivePrompts:
     Interactive prompts for user-friendly configuration and operations.
     """
 
-    def __init__(self):
+    def __init__(self, use_keychain: bool = True):
         """Initialize interactive prompts."""
         self.validator = ConfigValidator()
-        self.profile_manager = ProfileManager()
+        self.profile_manager = SecureProfileManager(use_keychain=use_keychain)
         self.env_config = EnvironmentConfig()
 
     def prompt_for_domain(self, current_domain: str = None) -> str:

@@ -6,7 +6,6 @@ from unittest.mock import patch, MagicMock, mock_open
 from click.testing import CliRunner
 from okta_cli.main import configure
 from okta_cli.users import list_users
-from okta_cli import config
 from okta_cli.enhanced_config import (
     ProfileManager,
     ConfigValidator,
@@ -24,9 +23,7 @@ from okta_cli.enhanced_config import (
 def temp_config_dir():
     """Create a temporary directory for config files."""
     with tempfile.TemporaryDirectory() as temp_dir:
-        config_path = os.path.join(temp_dir, "config")
-        with patch.object(config, "CONFIG_FILE", config_path):
-            yield temp_dir
+        yield temp_dir
 
 
 # Multiple Profile Management Tests
@@ -341,28 +338,28 @@ def test_list_users_with_profile_option(temp_config_dir):
     """Test list users command with profile option."""
     runner = CliRunner()
 
-    # First configure a profile
+    # First configure a profile using ProfileManager
     with runner.isolated_filesystem():
-        config.CONFIG_FILE = os.path.join(os.getcwd(), "config")
+        manager = ProfileManager(temp_config_dir)
+        manager.create_profile("dev", "dev.okta.com", "dev-token")
+        
+        with patch('okta_cli.enhanced_config.ProfileManager') as mock_profile_class:
+            def create_manager(*args, **kwargs):
+                return manager
+            mock_profile_class.side_effect = create_manager
+            
+            with patch("requests.get") as mock_get:
+                mock_response = MagicMock()
+                mock_response.status_code = 200
+                mock_response.json.return_value = [
+                    {"profile": {"login": "dev-user@test.com"}}
+                ]
+                mock_get.return_value = mock_response
 
-        cfg = config.get_config()
-        cfg.add_section("dev")
-        cfg.set("dev", "domain", "dev.okta.com")
-        cfg.set("dev", "token", "dev-token")
-        config.write_config(cfg)
+                result = runner.invoke(list_users, ["--profile", "dev"])
 
-        with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = [
-                {"profile": {"login": "dev-user@test.com"}}
-            ]
-            mock_get.return_value = mock_response
-
-            result = runner.invoke(list_users, ["--profile", "dev"])
-
-            assert result.exit_code == 0
-            assert "dev-user@test.com" in result.output
+                assert result.exit_code == 0
+                assert "dev-user@test.com" in result.output
 
 
 def test_environment_variable_precedence(temp_config_dir):
@@ -373,35 +370,35 @@ def test_environment_variable_precedence(temp_config_dir):
         os.environ, {"OKTA_DOMAIN": "env.okta.com", "OKTA_TOKEN": "env-token"}
     ):
         with runner.isolated_filesystem():
-            config.CONFIG_FILE = os.path.join(os.getcwd(), "config")
+            # Create config file with different values using ProfileManager
+            manager = ProfileManager(temp_config_dir)
+            manager.create_profile("default", "file.okta.com", "file-token")
+            
+            with patch('okta_cli.enhanced_config.ProfileManager') as mock_profile_class:
+                def create_manager(*args, **kwargs):
+                    return manager
+                mock_profile_class.side_effect = create_manager
+                
+                with patch("requests.get") as mock_get:
+                    mock_response = MagicMock()
+                    mock_response.status_code = 200
+                    mock_response.json.return_value = [
+                        {"profile": {"login": "env-user@test.com"}}
+                    ]
+                    mock_get.return_value = mock_response
 
-            # Create config file with different values
-            cfg = config.get_config()
-            cfg.add_section("default")
-            cfg.set("default", "domain", "file.okta.com")
-            cfg.set("default", "token", "file-token")
-            config.write_config(cfg)
+                    result = runner.invoke(list_users)
 
-            with patch("requests.get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = [
-                    {"profile": {"login": "env-user@test.com"}}
-                ]
-                mock_get.return_value = mock_response
-
-                result = runner.invoke(list_users)
-
-                # Should use environment values
-                mock_get.assert_called_with(
-                    "https://env.okta.com/api/v1/users",
-                    headers={
-                        "Authorization": "SSWS env-token",
-                        "Accept": "application/json",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=30,
-                )
+                    # Should use environment values
+                    mock_get.assert_called_with(
+                        "https://env.okta.com/api/v1/users",
+                        headers={
+                            "Authorization": "SSWS env-token",
+                            "Accept": "application/json",
+                            "Content-Type": "application/json",
+                        },
+                        timeout=30,
+                    )
 
 
 def test_profile_specific_environment_variables(temp_config_dir):

@@ -7,7 +7,7 @@ import requests
 import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
-from . import config
+
 from .errors import (
     handle_api_error,
     handle_network_error,
@@ -19,7 +19,7 @@ from .errors import (
 from .enhanced_config import get_effective_config
 from .formatting import create_output_option, format_and_output
 from .progress import progress_spinner
-import configparser
+
 
 
 @click.group()
@@ -30,28 +30,13 @@ def sessions():
 
 @sessions.command("list")
 @click.argument("user_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option("--limit", type=int, default=20, help="Number of sessions to retrieve.")
 @create_output_option()
 @with_error_handling
 def list_sessions(user_id, profile, limit, output):
     """List active sessions for a user."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -123,27 +108,12 @@ def list_sessions(user_id, profile, limit, output):
 @sessions.command("show")
 @click.argument("user_id")
 @click.argument("session_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @create_output_option()
 @with_error_handling
 def show_session(user_id, session_id, profile, output):
     """Show details for a specific user session."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -198,7 +168,7 @@ def show_session(user_id, session_id, profile, output):
 
 @sessions.command("clear")
 @click.argument("user_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option("--oauth-only", is_flag=True, help="Clear only OAuth sessions.")
 @click.option("--force", is_flag=True, help="Force clearing without confirmation.")
 @with_error_handling
@@ -212,22 +182,7 @@ def clear_sessions(user_id, profile, oauth_only, force):
             click.echo("Session clearing cancelled.")
             return
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -264,27 +219,12 @@ def clear_sessions(user_id, profile, oauth_only, force):
 @sessions.command("extend")
 @click.argument("user_id")
 @click.argument("session_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @create_output_option()
 @with_error_handling
 def extend_session(user_id, session_id, profile, output):
     """Extend a user session."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -329,7 +269,7 @@ def extend_session(user_id, session_id, profile, output):
 
 
 @sessions.command("stats")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option(
     "--days",
     type=int,
@@ -340,22 +280,7 @@ def extend_session(user_id, session_id, profile, output):
 @with_error_handling
 def session_stats(profile, days, output):
     """Get session statistics across the organization."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -430,28 +355,13 @@ def session_stats(profile, days, output):
 
 
 @sessions.command("active")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option("--limit", type=int, default=100, help="Number of sessions to check.")
 @create_output_option()
 @with_error_handling
 def active_sessions(profile, limit, output):
     """List currently active sessions across the organization."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",

@@ -6,7 +6,7 @@ import click
 import requests
 import json
 from typing import Dict, Any, List, Optional
-from . import config
+
 from .errors import (
     handle_api_error,
     handle_network_error,
@@ -19,7 +19,7 @@ from .errors import (
 from .enhanced_config import get_effective_config
 from .formatting import create_output_option, format_and_output
 from .progress import progress_spinner
-import configparser
+
 
 
 @click.group()
@@ -51,22 +51,7 @@ def policies():
 @with_error_handling
 def list_policies(policy_type, profile, limit, output):
     """List policies in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -133,22 +118,7 @@ def list_policies(policy_type, profile, limit, output):
 @with_error_handling
 def show_policy(policy_id, profile, output):
     """Show details for a specific policy."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -200,22 +170,7 @@ def show_policy(policy_id, profile, output):
 @with_error_handling
 def activate_policy(policy_id, profile):
     """Activate a policy."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -245,22 +200,7 @@ def activate_policy(policy_id, profile):
 @with_error_handling
 def deactivate_policy(policy_id, profile):
     """Deactivate a policy."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -299,22 +239,7 @@ def group_rules():
 @with_error_handling
 def list_group_rules(profile, limit, output):
     """List group rules in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -381,22 +306,7 @@ def list_group_rules(profile, limit, output):
 @with_error_handling
 def show_group_rule(rule_id, profile, output):
     """Show details for a specific group rule."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -462,22 +372,7 @@ def create_group_rule(name, rule_type, expression, group_id, profile, output):
     """Create a new group rule."""
     validate_name(name, "Rule name")
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -541,22 +436,7 @@ def create_group_rule(name, rule_type, expression, group_id, profile, output):
 @with_error_handling
 def update_group_rule(rule_id, name, expression, group_id, profile, output):
     """Update an existing group rule."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -655,22 +535,7 @@ def delete_group_rule(rule_id, profile, force):
             click.echo("Group rule deletion cancelled.")
             return
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -700,22 +565,7 @@ def delete_group_rule(rule_id, profile, force):
 @with_error_handling
 def activate_group_rule(rule_id, profile):
     """Activate a group rule."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -745,22 +595,7 @@ def activate_group_rule(rule_id, profile):
 @with_error_handling
 def deactivate_group_rule(rule_id, profile):
     """Deactivate a group rule."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",

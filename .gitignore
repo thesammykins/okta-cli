@@ -202,6 +202,7 @@ config.ini
 
 # Project specific
 # Add any project-specific files or directories to ignore here
+internal-docs/
 
 # Okta CLI Configuration and Secrets
 .okta-cli/

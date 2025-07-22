@@ -1,5 +1,8 @@
 """
 Enhanced configuration management for the Okta CLI tool.
+
+WARNING: Direct use of ProfileManager is deprecated and insecure.
+Please use SecureProfileManager from secure_storage module instead.
 """
 
 import os
@@ -7,6 +10,7 @@ import json
 import time
 import re
 import shutil
+import warnings
 from typing import Dict, List, Optional, Any, Tuple
 import requests
 from .errors import ConfigurationError, ValidationError
@@ -485,6 +489,7 @@ class ConfigValidator:
 def get_effective_config(profile: str = None) -> Tuple[str, str]:
     """
     Get effective configuration considering environment variables and profiles.
+    Uses secure storage for tokens.
 
     Args:
         profile: Profile name
@@ -504,8 +509,19 @@ def get_effective_config(profile: str = None) -> Tuple[str, str]:
     if env_domain and env_token:
         return env_domain, env_token
 
-    # Fall back to profile configuration
-    profile_manager = ProfileManager()
+    # Fall back to profile configuration using SecureProfileManager
+    try:
+        from .secure_storage import SecureProfileManager
+        profile_manager = SecureProfileManager()
+    except ImportError:
+        # Fallback to regular ProfileManager with warning
+        warnings.warn(
+            "SecureProfileManager not available. Using insecure ProfileManager. "
+            "Install keyring library for secure token storage.",
+            UserWarning,
+            stacklevel=2
+        )
+        profile_manager = ProfileManager()
 
     if profile is None:
         profile = env_config.get_profile() or profile_manager.get_active_profile()
@@ -514,6 +530,15 @@ def get_effective_config(profile: str = None) -> Tuple[str, str]:
         profile_data = profile_manager.get_profile(profile)
         domain = env_domain or profile_data["domain"]
         token = env_token or profile_data["token"]
+
+        # Check if token is stored insecurely and warn
+        if not profile_data.get("secure_storage", False) and profile_data.get("token"):
+            warnings.warn(
+                f"Profile '{profile}' stores tokens insecurely. "
+                "Please migrate to secure storage using 'okta config migrate-secure'.",
+                UserWarning,
+                stacklevel=2
+            )
 
         return domain, token
     except ValueError:

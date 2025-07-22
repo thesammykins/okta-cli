@@ -802,16 +802,7 @@ okta-cli logs stats --days 30 --output json
 okta-cli factors list user123 --output table
 okta-cli factors show user123 factor456
 
-# Factor Enrollment
-okta-cli factors enroll user123 \
-  --factor-type sms \
-  --phone-number "+1234567890"
-
-okta-cli factors enroll user123 \
-  --factor-type token:software:totp
-
 # Factor Operations
-okta-cli factors activate user123 factor456 --passcode 123456
 okta-cli factors verify user123 factor456 --passcode 123456
 okta-cli factors reset user123 factor456 --force
 

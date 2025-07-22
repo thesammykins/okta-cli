@@ -1,19 +1,20 @@
-import os
-import configparser
+"""Legacy config module stub - REMOVED
 
-CONFIG_DIR = os.path.expanduser("~/.okta")
-CONFIG_FILE = os.path.join(CONFIG_DIR, "credentials")
+This module has been removed as part of the transition to the new enhanced
+configuration system. The functionality is now provided by:
 
+- okta_cli.enhanced_config.ProfileManager for configuration management
+- okta_cli.enhanced_config.get_effective_config for retrieving config values
 
-def get_config():
-    """Reads the configuration file and returns a config object."""
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE)
-    return config
+Please update your imports to use the new configuration system.
+"""
 
-
-def write_config(config):
-    """Writes the configuration object to the config file."""
-    os.makedirs(CONFIG_DIR, exist_ok=True)
-    with open(CONFIG_FILE, "w") as configfile:
-        config.write(configfile)
+raise ImportError(
+    "The okta_cli.config module has been removed. "
+    "Please migrate to the new configuration system:\n"
+    "- Use 'from okta_cli.enhanced_config import ProfileManager, get_effective_config'\n"
+    "- Replace config.get_config() with ProfileManager().get_profile()\n"
+    "- Replace config.write_config() with ProfileManager().create_profile() or update_profile()\n"
+    "- For getting domain/token values, use get_effective_config(profile)\n"
+    "See documentation for migration guide."
+)

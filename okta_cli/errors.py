@@ -33,6 +33,38 @@ class APIError(OktaError):
     pass
 
 
+class AmbiguousIdentifierError(OktaError):
+    """Exception raised when an identifier matches multiple resources."""
+
+    pass
+
+
+class ResolutionError(OktaError):
+    """Exception raised when unable to resolve an identifier to a resource."""
+
+    def __init__(self, identifier: str, resource_type: str, tried_strategies: list, suggestions: list = None):
+        """
+        Initialize ResolutionError.
+        
+        Args:
+            identifier: The identifier that failed to resolve
+            resource_type: The type of resource (e.g., 'group', 'user')
+            tried_strategies: List of strategies that were attempted
+            suggestions: List of suggestions for the user
+        """
+        self.identifier = identifier
+        self.resource_type = resource_type
+        self.tried_strategies = tried_strategies or []
+        self.suggestions = suggestions or []
+        
+        # Create a user-friendly message
+        strategies_str = " & ".join(self.tried_strategies) if self.tried_strategies else "multiple searches"
+        suggestions_str = ". ".join(self.suggestions) if self.suggestions else "Use --id or check spelling"
+        
+        message = f"Unable to resolve {resource_type} '{identifier}'. Tried {strategies_str}. {suggestions_str}."
+        super().__init__(message)
+
+
 def validate_email(email: str) -> str:
     """
     Validate email format.
@@ -313,6 +345,10 @@ def with_error_handling(func):
         except ConfigurationError as e:
             safe_exit(str(e))
         except APIError as e:
+            safe_exit(str(e))
+        except AmbiguousIdentifierError as e:
+            safe_exit(str(e))
+        except ResolutionError as e:
             safe_exit(str(e))
         except requests.exceptions.RequestException as e:
             handle_network_error(e)

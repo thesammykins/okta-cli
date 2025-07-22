@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Okta CLI Quick Launcher
+# This script allows running okta-cli commands without manual activation
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/venv"
+
+if [[ ! -f "$VENV_DIR/bin/activate" ]]; then
+    echo "❌ Virtual environment not found. Run ./setup-okta-cli.sh first"
+    exit 1
+fi
+
+# Activate environment and run command
+source "$VENV_DIR/bin/activate"
+okta-cli "$@"

@@ -1237,7 +1237,7 @@ okta-cli logs stats --days 30 --output json
 
 ### `okta-cli factors`
 
-Manage MFA factors and enrollment.
+Manage MFA factors.
 
 #### `okta-cli factors list`
 
@@ -1273,56 +1273,6 @@ okta-cli factors show USER_ID FACTOR_ID [--output FORMAT] [--profile PROFILE]
 okta-cli factors show user123 factor456 --output json
 ```
 
-#### `okta-cli factors enroll`
-
-Enroll a user in an MFA factor.
-
-```bash
-okta-cli factors enroll USER_ID --factor-type TYPE [OPTIONS] [--profile PROFILE]
-```
-
-**Options:**
-- `--factor-type` - Factor type (required)
-- `--phone-number` - Phone number (for SMS/voice factors)
-- `--profile` - Configuration profile
-
-**Factor types:**
-- `sms` - SMS text message
-- `call` - Voice call
-- `token:software:totp` - Software TOTP (like Google Authenticator)
-- `token:hardware` - Hardware token
-- `push` - Push notification
-- `question` - Security question
-
-**Example:**
-```bash
-# Enroll SMS factor
-okta-cli factors enroll user123 \
-  --factor-type sms \
-  --phone-number "+1234567890" \
-  --profile prod
-
-# Enroll TOTP factor
-okta-cli factors enroll user123 \
-  --factor-type token:software:totp \
-  --profile prod
-```
-
-#### `okta-cli factors activate`
-
-Activate an enrolled factor.
-
-```bash
-okta-cli factors activate USER_ID FACTOR_ID --passcode PASSCODE [--profile PROFILE]
-```
-
-**Options:**
-- `--passcode` - Activation passcode (required)
-
-**Example:**
-```bash
-okta-cli factors activate user123 factor456 --passcode 123456 --profile prod
-```
 
 #### `okta-cli factors verify`
 

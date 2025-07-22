@@ -7,7 +7,7 @@ import requests
 import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
-from . import config
+
 from .errors import (
     handle_api_error,
     handle_network_error,
@@ -19,7 +19,7 @@ from .errors import (
 from .enhanced_config import get_effective_config
 from .formatting import create_output_option, format_and_output
 from .progress import progress_spinner
-import configparser
+
 
 
 def safe_nested_get(obj, *keys, default=""):
@@ -62,22 +62,7 @@ def logs():
 @with_error_handling
 def list_logs(profile, limit, since, until, filter, q, output):
     """List event logs from Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -169,22 +154,7 @@ def list_logs(profile, limit, since, until, filter, q, output):
 @with_error_handling
 def show_log(log_id, profile, output):
     """Show details for a specific log event."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -273,22 +243,7 @@ def show_log(log_id, profile, output):
 @with_error_handling
 def search_logs(profile, event_type, actor, target, outcome, days, limit, output):
     """Search event logs with filters."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -399,22 +354,7 @@ def search_logs(profile, event_type, actor, target, outcome, days, limit, output
 @with_error_handling
 def log_stats(profile, days, event_type, output):
     """Get statistics about event logs."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -555,22 +495,7 @@ def log_stats(profile, days, event_type, output):
 @with_error_handling
 def failed_logins(profile, days, limit, output):
     """Get failed login attempts."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -664,22 +589,7 @@ def failed_logins(profile, days, limit, output):
 @with_error_handling
 def suspicious_activities(profile, days, limit, output):
     """Get suspicious security activities."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",

@@ -1,5 +1,4 @@
 import click
-from . import config
 from . import users
 from . import groups
 from . import applications
@@ -17,7 +16,6 @@ from .errors import (
 )
 from .interactive import InteractivePrompts
 from .enhanced_config import ProfileManager
-import configparser
 
 
 @click.group()
@@ -41,7 +39,7 @@ def cli():
 
 
 @cli.command()
-@click.option("--profile", default="default", help="The profile to configure.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @with_error_handling
 def configure(profile):
     """Configures the Okta domain and API token."""
@@ -52,18 +50,23 @@ def configure(profile):
     validated_domain = validate_okta_domain(okta_domain)
     validated_token = validate_api_token(api_token)
 
-    try:
-        cfg = config.get_config()
-    except configparser.Error:
-        handle_corrupted_config()
-
-    if not cfg.has_section(profile):
-        cfg.add_section(profile)
-
-    cfg.set(profile, "domain", validated_domain)
-    cfg.set(profile, "token", validated_token)
-
-    config.write_config(cfg)
+    # Use ProfileManager instead of legacy config
+    manager = ProfileManager()
+    
+    if profile is None:
+        profile = "default"
+    
+    manager.create_profile(
+        name=profile,
+        domain=validated_domain,
+        token=validated_token
+    )
+    
+    # Set as active profile if it's the first one
+    profiles = manager.list_profiles()
+    if len(profiles) == 1:
+        manager.set_active_profile(profile)
+    
     click.echo(f"Configuration saved for profile '{profile}'.")
 
 

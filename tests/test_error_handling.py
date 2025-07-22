@@ -5,18 +5,21 @@ from unittest.mock import patch, MagicMock
 from okta_cli.users import list_users, create_user, show_user
 from okta_cli.groups import list_groups, create_group
 from okta_cli.main import configure
-from okta_cli import config
+from okta_cli.enhanced_config import ProfileManager
 
 
 @pytest.fixture
 def mock_config(tmp_path):
-    config_path = tmp_path / "config"
-    with patch.object(config, "CONFIG_FILE", str(config_path)):
-        cfg = config.get_config()
-        cfg.add_section("default")
-        cfg.set("default", "domain", "test.okta.com")
-        cfg.set("default", "token", "test-token")
-        config.write_config(cfg)
+    config_dir = tmp_path / "okta_config"
+    with patch('okta_cli.enhanced_config.ProfileManager') as mock_profile_class:
+        def create_manager(*args, **kwargs):
+            return ProfileManager(str(config_dir))
+        mock_profile_class.side_effect = create_manager
+        
+        # Create the profile
+        manager = ProfileManager(str(config_dir))
+        manager.create_profile("default", "test.okta.com", "test-token")
+        manager.set_active_profile("default")
         yield
 
 

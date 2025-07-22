@@ -1,12 +1,9 @@
 import click
 import requests
-from . import config
 from .errors import (
     handle_api_error,
     handle_network_error,
     handle_json_error,
-    handle_config_error,
-    handle_corrupted_config,
     with_error_handling,
     validate_email,
     validate_login,
@@ -17,7 +14,6 @@ from .formatting import UserFormatter, create_output_option, format_and_output
 from .utils import resolve_user_id, resolve_app_id, get_user_by_identifier
 from .progress import progress_spinner
 import json
-import configparser
 
 
 @click.group()
@@ -27,29 +23,12 @@ def users():
 
 
 @users.command("list")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @create_output_option()
 @with_error_handling
 def list_users(profile, output):
     """List users in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        # Fall back to legacy config if enhanced config fails
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
-
+    domain, token = get_effective_config(profile)
     headers = {
         "Authorization": f"SSWS {token}",
         "Accept": "application/json",
@@ -85,7 +64,7 @@ def list_users(profile, output):
 @click.option("--last-name", required=True)
 @click.option("--email", required=True)
 @click.option("--login", required=True)
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @create_output_option()
 @with_error_handling
 def create_user(first_name, last_name, email, login, profile, output):
@@ -96,24 +75,7 @@ def create_user(first_name, last_name, email, login, profile, output):
     validate_email(email)
     validate_login(login)
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        # Fall back to legacy config if enhanced config fails
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
-
+    domain, token = get_effective_config(profile)
     headers = {
         "Authorization": f"SSWS {token}",
         "Accept": "application/json",
@@ -160,17 +122,10 @@ def create_user(first_name, last_name, email, login, profile, output):
 
 @users.command("show")
 @click.argument("user_identifier")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def show_user(user_identifier, profile):
     """Show details for a specific user (accepts ID, email, or login)."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
-
+    domain, token = get_effective_config(profile)
     # Try to get user by identifier (ID, email, or login)
     user = get_user_by_identifier(user_identifier, domain, token)
 
@@ -182,16 +137,10 @@ def show_user(user_identifier, profile):
 
 @users.command("suspend")
 @click.argument("user_identifier")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def suspend_user(user_identifier, profile):
     """Suspend a user in Okta (accepts ID, email, or login)."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     # Resolve user identifier to ID
     user_id = resolve_user_id(user_identifier, domain, token)
@@ -217,16 +166,10 @@ def suspend_user(user_identifier, profile):
 
 @users.command("unsuspend")
 @click.argument("user_id")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def unsuspend_user(user_id, profile):
     """Unsuspend a user in Okta."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -250,16 +193,10 @@ def unsuspend_user(user_id, profile):
 @click.option("--last-name", help="User's last name.")
 @click.option("--email", help="User's email address.")
 @click.option("--login", help="User's login name.")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def update_user(user_identifier, first_name, last_name, email, login, profile):
     """Update a user's profile in Okta (accepts ID, email, or login)."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     # Resolve user identifier to ID
     user_id = resolve_user_id(user_identifier, domain, token)
@@ -310,16 +247,10 @@ def update_user(user_identifier, first_name, last_name, email, login, profile):
     "--profile-attributes",
     help="""JSON string of profile attributes (e.g., '{"role": "admin"}').""",
 )
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def assign_app(user_identifier, app_identifier, profile_attributes, profile):
     """Assigns a user to an application with optional profile attributes (accepts names or IDs)."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     # Resolve identifiers to IDs
     user_id = resolve_user_id(user_identifier, domain, token)
@@ -359,16 +290,10 @@ def assign_app(user_identifier, app_identifier, profile_attributes, profile):
 @users.command("unassign-app")
 @click.argument("user_id")
 @click.argument("app_id")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def unassign_app(user_id, app_id, profile):
     """Unassigns a user from an application."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -388,16 +313,10 @@ def unassign_app(user_id, app_id, profile):
 
 @users.command("list-app-assignments")
 @click.argument("app_id")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def list_app_assignments(app_id, profile):
     """Lists users assigned to a specific application."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -418,16 +337,10 @@ def list_app_assignments(app_id, profile):
 
 @users.command("deactivate")
 @click.argument("user_id")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def deactivate_user(user_id, profile):
     """Deactivates a user in Okta."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -447,16 +360,10 @@ def deactivate_user(user_id, profile):
 
 @users.command("activate")
 @click.argument("user_id")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def activate_user(user_id, profile):
     """Activates a user in Okta."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -476,16 +383,10 @@ def activate_user(user_id, profile):
 
 @users.command("reset-password")
 @click.argument("user_id")
-@click.option("--profile", default="default", help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 def reset_password(user_id, profile):
     """Resets a user's password in Okta and returns a temporary password."""
-    cfg = config.get_config()
-    if not cfg.has_section(profile):
-        click.echo(f"Profile '{profile}' not found. Please run `okta-cli configure`.")
-        return
-
-    domain = cfg.get(profile, "domain")
-    token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",

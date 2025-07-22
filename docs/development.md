@@ -60,9 +60,9 @@ okta-cli/
 ├── okta_cli/                   # Main package directory
 │   ├── __init__.py
 │   ├── main.py                 # Main CLI entry point
-│   ├── config.py               # Configuration management
+│   ├── config.py               # Legacy config (removed - raises ImportError)
 │   ├── config_commands.py      # Configuration CLI commands
-│   ├── enhanced_config.py      # Enhanced configuration features
+│   ├── enhanced_config.py      # Enhanced configuration system
 │   ├── users.py                # User management commands
 │   ├── groups.py               # Group management commands
 │   ├── applications.py         # Application management commands
@@ -114,7 +114,7 @@ okta-cli/
 The CLI follows a modular architecture with separate modules for each feature area:
 
 1. **main.py** - Main CLI entry point and command group setup
-2. **config.py** - Configuration management and persistence
+2. **enhanced_config.py** - Configuration management and persistence
 3. **users.py** - User lifecycle operations
 4. **groups.py** - Group management operations
 5. **applications.py** - Application management
@@ -129,7 +129,7 @@ The CLI follows a modular architecture with separate modules for each feature ar
 #### Configuration Loading
 
 ```python
-from okta_cli.config import get_effective_config
+from okta_cli.enhanced_config import get_effective_config
 
 def my_command():
     domain, token = get_effective_config(profile)

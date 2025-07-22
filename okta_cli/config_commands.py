@@ -13,6 +13,7 @@ from .enhanced_config import (
     health_check,
     validate_profile,
 )
+from .secure_storage import SecureProfileManager
 from .errors import with_error_handling
 from .interactive import InteractivePrompts
 from .formatting import ConfigFormatter, create_output_option, format_and_output
@@ -30,7 +31,7 @@ def config():
 @with_error_handling
 def list_profiles(output):
     """List all configuration profiles."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
     profiles = manager.list_profiles()
     active_profile = manager.get_active_profile()
 
@@ -53,7 +54,7 @@ def list_profiles(output):
 @with_error_handling
 def create_profile(name, domain, token, set_active):
     """Create a new configuration profile."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
     validator = ConfigValidator()
 
     # Validate inputs
@@ -88,7 +89,7 @@ def create_profile(name, domain, token, set_active):
 @with_error_handling
 def update_profile(name, domain, token):
     """Update an existing configuration profile."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
     validator = ConfigValidator()
 
     # Validate inputs
@@ -114,7 +115,7 @@ def update_profile(name, domain, token):
 @with_error_handling
 def delete_profile(name, force):
     """Delete a configuration profile."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     if not force:
         if not click.confirm(f"Are you sure you want to delete profile '{name}'?"):
@@ -134,7 +135,7 @@ def delete_profile(name, force):
 @with_error_handling
 def activate_profile(name):
     """Set a profile as the active profile."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     try:
         # Check if profile exists
@@ -151,7 +152,7 @@ def activate_profile(name):
 @with_error_handling
 def show_profile(name):
     """Show details of a configuration profile."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     if name is None:
         name = manager.get_active_profile()
@@ -174,7 +175,7 @@ def show_profile(name):
 @with_error_handling
 def validate_profile_command(name):
     """Validate a configuration profile."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     if name is None:
         name = manager.get_active_profile()
@@ -225,7 +226,7 @@ def health_check_command(name, output):
 @with_error_handling
 def backup_config(output):
     """Create a backup of the configuration."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     if output:
         backup_path = output
@@ -245,7 +246,7 @@ def backup_config(output):
 @with_error_handling
 def restore_config(backup_path, force):
     """Restore configuration from a backup."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     if not os.path.exists(backup_path):
         click.echo(f"Error: Backup file not found: {backup_path}")
@@ -270,7 +271,7 @@ def restore_config(backup_path, force):
 @with_error_handling
 def export_config(output_path):
     """Export configuration to a file."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     result = manager.export_config(output_path)
     if result:
@@ -285,7 +286,7 @@ def export_config(output_path):
 @with_error_handling
 def import_config(input_path, force):
     """Import configuration from a file."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     if not os.path.exists(input_path):
         click.echo(f"Error: Input file not found: {input_path}")
@@ -327,7 +328,7 @@ def show_env_config():
 @with_error_handling
 def migrate_legacy_config(legacy_config_path):
     """Migrate legacy configuration format."""
-    manager = ProfileManager()
+    manager = SecureProfileManager()
 
     if not os.path.exists(legacy_config_path):
         click.echo(f"Error: Legacy config file not found: {legacy_config_path}")
@@ -353,7 +354,7 @@ def show_current_config(output):
         if env_config.has_complete_config():
             source = "Environment variables"
         else:
-            manager = ProfileManager()
+            manager = SecureProfileManager()
             active_profile = manager.get_active_profile()
             source = f"Profile '{active_profile}'"
 
@@ -421,7 +422,7 @@ def interactive_mode():
                 # Delete profile
                 try:
                     profile_name = interactive.prompt_for_profile_selection()
-                    manager = ProfileManager()
+                    manager = SecureProfileManager()
                     if click.confirm(
                         f"Are you sure you want to delete profile '{profile_name}'?"
                     ):
@@ -438,7 +439,7 @@ def interactive_mode():
                 # Set active profile
                 try:
                     profile_name = interactive.prompt_for_profile_selection()
-                    manager = ProfileManager()
+                    manager = SecureProfileManager()
                     manager.set_active_profile(profile_name)
                     click.echo(
                         click.style(
@@ -485,6 +486,96 @@ def show_status():
     """Show detailed configuration status."""
     interactive = InteractivePrompts()
     interactive.show_configuration_status()
+
+
+@config.command("migrate-secure")
+@click.option("--force", is_flag=True, help="Force migration without confirmation")
+@with_error_handling
+def migrate_to_secure_storage(force):
+    """Migrate existing profiles to secure token storage."""
+    from .secure_storage import SecureProfileManager
+    
+    # Check if keyring is available
+    try:
+        import keyring
+    except ImportError:
+        click.echo("❌ Error: keyring library not available. Install it with: pip install keyring")
+        return
+    
+    manager = SecureProfileManager()
+    
+    if not force:
+        click.echo("🔐 This will migrate your profiles to secure token storage.")
+        click.echo("Tokens will be stored in your system's keychain instead of plain text files.")
+        if not click.confirm("Continue with migration?"):
+            click.echo("Migration cancelled.")
+            return
+    
+    try:
+        results = manager.migrate_to_secure_storage()
+        
+        if not results:
+            click.echo("ℹ️  No profiles need migration (already using secure storage).")
+            return
+        
+        success_count = sum(1 for success in results.values() if success)
+        total_count = len(results)
+        
+        click.echo(f"\n🔐 Migration Results:")
+        for profile_name, success in results.items():
+            status = "✅ Success" if success else "❌ Failed"
+            click.echo(f"  • {profile_name}: {status}")
+        
+        if success_count == total_count:
+            click.echo(f"\n🎉 Successfully migrated {success_count} profile(s) to secure storage!")
+            click.echo("Your tokens are now stored securely in your system keychain.")
+        else:
+            click.echo(f"\n⚠️  Migrated {success_count}/{total_count} profiles.")
+            click.echo("Some profiles could not be migrated. Check the results above.")
+            
+    except Exception as e:
+        click.echo(f"❌ Migration failed: {e}")
+
+
+@config.command("security-check")
+@with_error_handling
+def security_check():
+    """Check for insecurely stored tokens and recommend migration."""
+    manager = SecureProfileManager(use_keychain=False)  # Load without keychain to check raw data
+    profiles = manager.list_profiles()
+    
+    if not profiles:
+        click.echo("ℹ️  No profiles configured.")
+        return
+    
+    insecure_profiles = []
+    secure_profiles = []
+    
+    for name, profile_data in profiles.items():
+        if profile_data.get("secure_storage", False):
+            secure_profiles.append(name)
+        elif profile_data.get("token"):  # Has token stored in JSON
+            insecure_profiles.append(name)
+    
+    click.echo("🔍 Security Check Results:\n")
+    
+    if secure_profiles:
+        click.echo(f"✅ Secure profiles ({len(secure_profiles)}):")
+        for name in secure_profiles:
+            click.echo(f"  • {name}")
+        click.echo()
+    
+    if insecure_profiles:
+        click.echo(f"⚠️  Insecure profiles ({len(insecure_profiles)}):")
+        for name in insecure_profiles:
+            click.echo(f"  • {name} (tokens stored in plain text)")
+        click.echo()
+        click.echo("🔐 Recommendation: Run 'okta config migrate-secure' to secure your tokens.")
+    else:
+        if secure_profiles:
+            click.echo("🎉 All your profiles use secure token storage!")
+        else:
+            click.echo("ℹ️  No tokens found in profiles.")
 
 
 if __name__ == "__main__":

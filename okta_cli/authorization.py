@@ -6,7 +6,6 @@ import click
 import requests
 import json
 from typing import Dict, Any, List, Optional
-from . import config
 from .errors import (
     handle_api_error,
     handle_network_error,
@@ -19,7 +18,6 @@ from .errors import (
 from .enhanced_config import get_effective_config
 from .formatting import create_output_option, format_and_output
 from .progress import progress_spinner
-import configparser
 
 
 @click.group()
@@ -37,22 +35,7 @@ def authorization():
 @with_error_handling
 def list_authorization_servers(profile, limit, output):
     """List authorization servers in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -123,22 +106,7 @@ def list_authorization_servers(profile, limit, output):
 @with_error_handling
 def show_authorization_server(server_id, profile, output):
     """Show details for a specific authorization server."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -194,22 +162,7 @@ def create_authorization_server(name, description, audience, profile, output):
     """Create a new authorization server."""
     validate_name(name, "Authorization server name")
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -273,22 +226,7 @@ def update_authorization_server(
     server_id, name, description, audience, profile, output
 ):
     """Update an existing authorization server."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -388,22 +326,7 @@ def delete_authorization_server(server_id, profile, force):
             click.echo("Authorization server deletion cancelled.")
             return
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -435,22 +358,7 @@ def delete_authorization_server(server_id, profile, force):
 @with_error_handling
 def activate_authorization_server(server_id, profile):
     """Activate an authorization server."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -482,22 +390,7 @@ def activate_authorization_server(server_id, profile):
 @with_error_handling
 def deactivate_authorization_server(server_id, profile):
     """Deactivate an authorization server."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -537,22 +430,7 @@ def scopes():
 @with_error_handling
 def list_scopes(server_id, profile, limit, output):
     """List scopes for an authorization server."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -627,22 +505,7 @@ def create_scope(server_id, name, description, consent, profile, output):
     """Create a new scope for an authorization server."""
     validate_name(name, "Scope name")
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",

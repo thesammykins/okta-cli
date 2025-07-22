@@ -6,7 +6,6 @@ import click
 import requests
 import json
 from typing import Dict, Any, List, Optional
-from . import config
 from .errors import (
     handle_api_error,
     handle_network_error,
@@ -19,7 +18,6 @@ from .errors import (
 from .enhanced_config import get_effective_config
 from .formatting import create_output_option, format_and_output
 from .progress import progress_spinner
-import configparser
 
 
 @click.group()
@@ -29,7 +27,7 @@ def applications():
 
 
 @applications.command("list")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option(
     "--limit", type=int, default=20, help="Number of applications to retrieve."
 )
@@ -38,23 +36,7 @@ def applications():
 @with_error_handling
 def list_applications(profile, limit, filter, output):
     """List applications in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        # Fall back to legacy config if enhanced config fails
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -109,27 +91,12 @@ def list_applications(profile, limit, filter, output):
 
 @applications.command("show")
 @click.argument("app_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @create_output_option()
 @with_error_handling
 def show_application(app_id, profile, output):
     """Show details for a specific application."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -192,7 +159,7 @@ def show_application(app_id, profile, output):
     default="BOOKMARK",
     help="Sign-on mode.",
 )
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @create_output_option()
 @with_error_handling
 def create_application(name, label, sign_on_mode, profile, output):
@@ -201,22 +168,7 @@ def create_application(name, label, sign_on_mode, profile, output):
     validate_name(name, "Application name")
     validate_name(label, "Application label")
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -266,27 +218,12 @@ def create_application(name, label, sign_on_mode, profile, output):
 @click.option(
     "--status", type=click.Choice(["ACTIVE", "INACTIVE"]), help="Application status."
 )
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @create_output_option()
 @with_error_handling
 def update_application(app_id, name, label, status, profile, output):
     """Update an existing application in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -348,7 +285,7 @@ def update_application(app_id, name, label, status, profile, output):
 
 @applications.command("delete")
 @click.argument("app_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option("--force", is_flag=True, help="Force deletion without confirmation.")
 @with_error_handling
 def delete_application(app_id, profile, force):
@@ -360,22 +297,7 @@ def delete_application(app_id, profile, force):
             click.echo("Application deletion cancelled.")
             return
 
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -399,26 +321,11 @@ def delete_application(app_id, profile, force):
 
 @applications.command("activate")
 @click.argument("app_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @with_error_handling
 def activate_application(app_id, profile):
     """Activate an application in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -444,26 +351,11 @@ def activate_application(app_id, profile):
 
 @applications.command("deactivate")
 @click.argument("app_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @with_error_handling
 def deactivate_application(app_id, profile):
     """Deactivate an application in Okta."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -489,28 +381,13 @@ def deactivate_application(app_id, profile):
 
 @applications.command("list-users")
 @click.argument("app_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option("--limit", type=int, default=20, help="Number of users to retrieve.")
 @create_output_option()
 @with_error_handling
 def list_app_users(app_id, profile, limit, output):
     """List users assigned to an application."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",
@@ -562,28 +439,13 @@ def list_app_users(app_id, profile, limit, output):
 
 @applications.command("list-groups")
 @click.argument("app_id")
-@click.option("--profile", default=None, help="The profile to use.")
+@click.option("--profile", default=None, help="The profile to use (defaults to active profile).")
 @click.option("--limit", type=int, default=20, help="Number of groups to retrieve.")
 @create_output_option()
 @with_error_handling
 def list_app_groups(app_id, profile, limit, output):
     """List groups assigned to an application."""
-    try:
-        domain, token = get_effective_config(profile)
-    except Exception as e:
-        try:
-            cfg = config.get_config()
-        except configparser.Error:
-            handle_corrupted_config()
-
-        if profile is None:
-            profile = "default"
-
-        if not cfg.has_section(profile):
-            handle_config_error(profile)
-
-        domain = cfg.get(profile, "domain")
-        token = cfg.get(profile, "token")
+    domain, token = get_effective_config(profile)
 
     headers = {
         "Authorization": f"SSWS {token}",

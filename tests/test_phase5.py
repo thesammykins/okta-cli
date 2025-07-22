@@ -521,11 +521,12 @@ class TestFactorsCommands:
         self.runner = CliRunner()
         self.mock_response = Mock()
         self.mock_response.status_code = 200
-        self.mock_response.json.return_value = []
+        self.mock_response.json.return_value = {}
 
+    @patch("okta_cli.factors.resolve_user_id", return_value="user123")
     @patch("okta_cli.factors.requests.get")
     @patch("okta_cli.factors.get_effective_config")
-    def test_list_factors_success(self, mock_config, mock_get):
+    def test_list_factors_success(self, mock_config, mock_get, mock_resolve):
         """Test successful factor listing."""
         mock_config.return_value = ("test.okta.com", "test-token")
         mock_get.return_value = self.mock_response
@@ -536,9 +537,10 @@ class TestFactorsCommands:
         mock_get.assert_called_once()
         mock_config.assert_called_once()
 
+    @patch("okta_cli.factors.resolve_user_id", return_value="user123")
     @patch("okta_cli.factors.requests.get")
     @patch("okta_cli.factors.get_effective_config")
-    def test_show_factor_success(self, mock_config, mock_get):
+    def test_show_factor_success(self, mock_config, mock_get, mock_resolve):
         """Test successful factor show."""
         mock_config.return_value = ("test.okta.com", "test-token")
         mock_get.return_value = self.mock_response
@@ -549,47 +551,11 @@ class TestFactorsCommands:
         mock_get.assert_called_once()
         mock_config.assert_called_once()
 
-    @patch("okta_cli.factors.requests.post")
-    @patch("okta_cli.factors.get_effective_config")
-    def test_enroll_factor_success(self, mock_config, mock_post):
-        """Test successful factor enrollment."""
-        mock_config.return_value = ("test.okta.com", "test-token")
-        mock_post.return_value = self.mock_response
 
-        result = self.runner.invoke(
-            factors,
-            [
-                "enroll",
-                "user123",
-                "--factor-type",
-                "sms",
-                "--phone-number",
-                "+1234567890",
-            ],
-        )
-
-        assert result.exit_code == 0
-        mock_post.assert_called_once()
-        mock_config.assert_called_once()
-
-    @patch("okta_cli.factors.requests.post")
-    @patch("okta_cli.factors.get_effective_config")
-    def test_activate_factor_success(self, mock_config, mock_post):
-        """Test successful factor activation."""
-        mock_config.return_value = ("test.okta.com", "test-token")
-        mock_post.return_value = self.mock_response
-
-        result = self.runner.invoke(
-            factors, ["activate", "user123", "factor456", "--passcode", "123456"]
-        )
-
-        assert result.exit_code == 0
-        mock_post.assert_called_once()
-        mock_config.assert_called_once()
-
+    @patch("okta_cli.factors.resolve_user_id", return_value="user123")
     @patch("okta_cli.factors.requests.delete")
     @patch("okta_cli.factors.get_effective_config")
-    def test_reset_factor_success(self, mock_config, mock_delete):
+    def test_reset_factor_success(self, mock_config, mock_delete, mock_resolve):
         """Test successful factor reset."""
         mock_config.return_value = ("test.okta.com", "test-token")
         mock_delete.return_value = Mock(status_code=204)
@@ -602,11 +568,13 @@ class TestFactorsCommands:
         mock_delete.assert_called_once()
         mock_config.assert_called_once()
 
+    @patch("okta_cli.factors.resolve_user_id", return_value="user123")
     @patch("okta_cli.factors.requests.post")
     @patch("okta_cli.factors.get_effective_config")
-    def test_verify_factor_success(self, mock_config, mock_post):
+    def test_verify_factor_success(self, mock_config, mock_post, mock_resolve):
         """Test successful factor verification."""
         mock_config.return_value = ("test.okta.com", "test-token")
+        mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {"factorResult": "SUCCESS"}
 
         result = self.runner.invoke(
@@ -617,9 +585,10 @@ class TestFactorsCommands:
         mock_post.assert_called_once()
         mock_config.assert_called_once()
 
+    @patch("okta_cli.factors.resolve_user_id", return_value="user123")
     @patch("okta_cli.factors.requests.get")
     @patch("okta_cli.factors.get_effective_config")
-    def test_list_catalog_success(self, mock_config, mock_get):
+    def test_list_catalog_success(self, mock_config, mock_get, mock_resolve):
         """Test successful factor catalog listing."""
         mock_config.return_value = ("test.okta.com", "test-token")
         mock_get.return_value = self.mock_response

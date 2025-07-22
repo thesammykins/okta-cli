@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock, call
 from click.testing import CliRunner
 from okta_cli.main import configure
 from okta_cli.users import list_users
-from okta_cli import config
+from okta_cli.enhanced_config import ProfileManager
 import requests
 
 
@@ -14,9 +14,7 @@ import requests
 def temp_config_dir():
     """Create a temporary directory for config files."""
     with tempfile.TemporaryDirectory() as temp_dir:
-        config_path = os.path.join(temp_dir, "config")
-        with patch.object(config, "CONFIG_FILE", config_path):
-            yield config_path
+        yield temp_dir
 
 
 # Encrypted Credential Storage Tests
